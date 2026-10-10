@@ -1,14 +1,32 @@
 import datetime
+import os
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import requests
 import schedule
-import time
 
 
+# 1. Render'ın Web Service port ihtiyacını karşılayacak basit HTTP sunucusu
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Form Otomasyonu Bulutta Aktif!")
+
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+
+# 2. Form Gönderim Fonksiyonu
 def form_gonder():
     bugun = datetime.datetime.now().weekday()
-    # 6 = Pazar günü. Pazar ise çalıştırma
-    if bugun == 6:
-        print("Bugün Pazar, form gönderilmedi.")
+    if bugun == 6:  # Pazar günü çalışmasın
+        print("Bugün Pazar, form gönderilmedi.", flush=True)
         return
 
     url = "https://docs.google.com/forms/d/e/1FAIpQLSeYuI6376usUPIpt5Ff_jymp142bzZ588cJyhw3x9PD2v60Fw/formResponse"
@@ -34,17 +52,26 @@ def form_gonder():
 
     try:
         res = requests.post(url, data=payload, headers=headers)
-        print(f"Form gönderildi! Yanıt Kodu: {res.status_code}")
+        print(f"Form gönderildi! Yanıt Kodu: {res.status_code}", flush=True)
     except Exception as e:
-        print(f"Hata oluştu: {e}")
+        print(f"Hata oluştu: {e}", flush=True)
 
 
-# Türkiye Saati (UTC+3) baz alınarak zamanlama:
-# Render sunucuları UTC kullandığından 07:00 -> 04:00 UTC, 23:00 -> 20:00 UTC
+# Web sunucusunu arka planda başlat
+server_thread = threading.Thread(target=run_web_server, daemon=True)
+server_thread.start()
+
+# Zamanlayıcılar (Türkiye Saati UTC+3 -> 07:00 için 04:00 UTC, 23:00 için 20:00 UTC)
 schedule.every().day.at("04:00").do(form_gonder)
 schedule.every().day.at("20:00").do(form_gonder)
 
-print("Otomasyon bulutta başlatıldı. Tetiklenme bekleniyor...")
+print(
+    "Otomasyon bulutta başlatıldı. Tetiklenme bekleniyor...",
+    flush=True,
+)
+
+# Test amaçlı anında 1 kez gönderim denemesi yapmak için aşağıdaki satırı açabilirsiniz:
+# form_gonder()
 
 while True:
     schedule.run_pending()
