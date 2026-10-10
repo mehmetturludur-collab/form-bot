@@ -7,7 +7,7 @@ import requests
 import schedule
 
 
-# 1. Render'ın port tarama (port scan) kuralını karşılayan hafif web sunucusu
+# 1. Render port kuralı için hafif web sunucusu
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -57,7 +57,7 @@ def form_gonder():
         print(f"Hata oluştu: {e}", flush=True)
 
 
-# Web sunucusunu arka planda başlat (Render port hatasını engeller)
+# Web sunucusunu arka planda başlat
 server_thread = threading.Thread(target=run_web_server, daemon=True)
 server_thread.start()
 
@@ -69,6 +69,9 @@ print(
     "Otomasyon bulutta başlatıldı. Tetiklenme bekleniyor...",
     flush=True,
 )
+
+# ANLIK TEST: Sunucu başladığı an 1 kez otomatik gönderir
+form_gonder()
 
 while True:
     schedule.run_pending()
