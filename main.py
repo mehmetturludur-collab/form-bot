@@ -7,7 +7,7 @@ import requests
 import schedule
 
 
-# 1. Render'ın Web Service port ihtiyacını karşılayacak basit HTTP sunucusu
+# 1. Render'ın port tarama (port scan) kuralını karşılayan hafif web sunucusu
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -57,11 +57,11 @@ def form_gonder():
         print(f"Hata oluştu: {e}", flush=True)
 
 
-# Web sunucusunu arka planda başlat
+# Web sunucusunu arka planda başlat (Render port hatasını engeller)
 server_thread = threading.Thread(target=run_web_server, daemon=True)
 server_thread.start()
 
-# Zamanlayıcılar (Türkiye Saati UTC+3 -> 07:00 için 04:00 UTC, 23:00 için 20:00 UTC)
+# Zamanlayıcılar (TR Saati UTC+3 -> 07:00 için 04:00 UTC, 23:00 için 20:00 UTC)
 schedule.every().day.at("04:00").do(form_gonder)
 schedule.every().day.at("20:00").do(form_gonder)
 
@@ -69,9 +69,6 @@ print(
     "Otomasyon bulutta başlatıldı. Tetiklenme bekleniyor...",
     flush=True,
 )
-
-# Test amaçlı anında 1 kez gönderim denemesi yapmak için aşağıdaki satırı açabilirsiniz:
-# form_gonder()
 
 while True:
     schedule.run_pending()
